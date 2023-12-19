@@ -1,0 +1,59 @@
+version: "3.8"
+services:
+  app:
+    image: "jc21/nginx-proxy-manager:2.10.4"
+    restart: unless-stopped
+    ports:
+      - "80:80" # Public HTTP Port
+      - "443:443" # Public HTTPS Port
+      - "81:81" # Admin Web Port
+    environment:
+      TZ: "Asia/Jakarta"
+      DB_MYSQL_HOST: "db"
+      DB_MYSQL_PORT: 3306
+      DB_MYSQL_USER: "npm"
+      DB_MYSQL_PASSWORD: "npm"
+      DB_MYSQL_NAME: "npm"
+    volumes:
+      - type: volume
+        source: npm_app_data
+        target: "/data"
+        read_only: false
+      - type: volume
+        source: npm_app_letsencrypt
+        target: "/etc/letsencrypt"
+        read_only: false
+    depends_on:
+      - db
+    networks:
+      - nginxproxymanager
+
+  db:
+    image: "jc21/mariadb-aria:10.11.5"
+    restart: unless-stopped
+    environment:
+      TZ: "Asia/Jakarta"
+      MYSQL_ROOT_PASSWORD: "npm"
+      MYSQL_DATABASE: "npm"
+      MYSQL_USER: "npm"
+      MYSQL_PASSWORD: "npm"
+    volumes:
+      - type: volume
+        source: npm_db
+        target: "/var/lib/mysql"
+        read_only: false
+    networks:
+      - nginxproxymanager
+
+volumes:
+  npm_app_data:
+    name: npm_app_data
+  npm_app_letsencrypt:
+    name: npm_app_letsencrypt
+  npm_db:
+    name: npm_db
+
+networks:
+  default:
+    external: true
+    name: nginxproxymanager
